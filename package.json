@@ -1,0 +1,49 @@
+{
+  "name": "gltumble",
+  "version": "0.0.0",
+  "description": "Spin an object by dragging with a mouse, trackpad, or touch screen",
+  "main": "gltumble.js",
+  "module": "index.js",
+  "jsdelivr": "gltumble.min.js",
+  "unpkg": "gltumble.min.js",
+  "dependencies": {
+    "gl-matrix": "^2.8.1"
+  },
+  "devDependencies": {
+    "c8": "^3.2.0",
+    "eslint": "^5.6.0",
+    "eslint-config-mourner": "^3.0.0",
+    "esm": "^3.0.84",
+    "rollup": "^0.66.2",
+    "rollup-plugin-buble": "^0.19.2",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-terser": "^3.0.0",
+    "tape": "^4.9.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prideout/gltumble.git"
+  },
+  "scripts": {
+    "disable__lint": "eslint index.js test.js rollup.config.js",
+    "disable__pretest": "npm run lint",
+    "test": "node -r esm test.js",
+    "disable__cov": "c8 node -r esm test.js && c8 report -r html",
+    "build": "rollup -c",
+    "clean": "rm gltumble.*",
+    "watch": "rollup -cw",
+    "disable__prepublishOnly": "npm test && npm run build"
+  },
+  "files": [
+    "gltumble.js",
+    "gltumble.min.js"
+  ],
+  "eslintConfig": {
+    "extends": "mourner",
+    "rules": {
+      "no-sequences": 0
+    }
+  },
+  "author": "Philip Rideout",
+  "license": "MIT"
+}
