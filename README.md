@@ -2,12 +2,13 @@
 
 [![badge]](https://travis-ci.org/prideout/gltumble)
 
-This library provides a math class called `Trackball` that allows users to spin (or "tumble") an
-object by dragging with a mouse, trackpad, or touch screen. It optionally applies inertia such that
-the object continues to spin if you flick it.
+This library provides a math class called `Trackball` that allows users to tumble an object by
+dragging with a mouse, trackpad, or touch screen. It optionally applies inertia such that the object
+continues to spin if you flick it.
 
-The trackball does not do anything with quaternions. It simply applies Y rotation followed by X
-rotation. It avoids rotation about the Z axis, and here's why:
+The trackball does not do anything with quaternions. It simply applies Y rotation (*spin*) followed
+by X rotation (*tilt*). Inertia applies to spin, but not tilt. The trackball avoids rotation about
+the Z axis, and here's why:
 
 **When I'm at a museum, I often walk around an *objet d'art*, or stand on my tiptoes to see its top,
 or crouch to see its underside. However, I very rarely tilt my head to the side, since that doesn't
@@ -20,7 +21,8 @@ as [trackball-controller].
 - [Interactive Demo] using [Filament] and WebGL 2.0
 - The demo [source code] is a single JS file.
 
-Note that `gltumble` emulates the behavior used by [sketchfab.com].
+Note that `gltumble` emulates the behavior used by [sketchfab.com] except that it does not support
+zooming yet.
 
 ## Example
 
@@ -52,13 +54,9 @@ Or use one of the following two CDN builds.
 
 Constructs a trackball, given an optional configuration dictionary.
 
-#### trackball.touch(...)
+#### trackball.getMatrix()
 
-TBD.
-
-#### trackball.getTransform(...)
-
-TBD.
+Returns a flat array of 16 numbers representing the current mat4 transformation.
 
 [badge]: https://travis-ci.org/prideout/.svg?branch=master "Build Status"
 [glMatrix]: http://glmatrix.net

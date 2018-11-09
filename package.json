@@ -25,14 +25,14 @@
     "url": "https://github.com/prideout/gltumble.git"
   },
   "scripts": {
-    "disable__lint": "eslint index.js test.js rollup.config.js",
-    "disable__pretest": "npm run lint",
+    "lint": "eslint index.js test.js rollup.config.js",
+    "pretest": "npm run lint",
     "test": "node -r esm test.js",
-    "disable__cov": "c8 node -r esm test.js && c8 report -r html",
+    "cov": "c8 node -r esm test.js && c8 report -r html",
     "build": "rollup -c",
     "clean": "rm gltumble.*",
     "watch": "rollup -cw",
-    "disable__prepublishOnly": "npm test && npm run build"
+    "prepublishOnly": "npm test && npm run build"
   },
   "files": [
     "gltumble.js",

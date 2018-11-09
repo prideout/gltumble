@@ -5,7 +5,7 @@ import resolve from 'rollup-plugin-node-resolve';
 const config = (file, plugins) => ({
     input: 'index.js',
     output: {
-        name: 'gltumble',
+        name: 'Trackball',
         format: 'umd',
         file
     },

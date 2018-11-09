@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>gltumble</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1">
+<style>
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+canvas {
+    touch-action: none;
+    width: 100%;
+    height: 100%;
+}
+div.demo_frame {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+</style>
+</head>
+<body>
+<div class="demo_frame">
+<canvas></canvas>
+</div>
+<script src="../gltumble.js"></script>
+<script src="//unpkg.com/gl-matrix@2.8.1/dist/gl-matrix-min.js"></script>
+<script src="//unpkg.com/knotess@1.1.0/knotess.min.js"></script>
+<script src="//unpkg.com/filament/filament.js"></script>
+<script>
+
+const CENTERLINES = '//unpkg.com/knotess@1.0.1/centerlines.bin';
+const PLASTIC = 'https://prideout.net/knotess/plastic.filamat';
+const DEFAULT_LINK = '8.3.5';
+
+Filament.init([ CENTERLINES, PLASTIC ], () => {
+    window.VertexAttribute = Filament.VertexAttribute;
+    window.AttributeType = Filament.VertexBuffer$AttributeType;
+    window.Fov = Filament.Camera$Fov;
+    window.LightType = Filament.LightManager$Type;
+    window.app = new App(document.getElementsByTagName('canvas')[0]);
+});
+
+class App {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.trackball = new Trackball(canvas);
+        this.knots = new Knotess(Filament.assets[CENTERLINES].buffer);
+        this.renderables = {};
+
+        const engine = this.engine = Filament.Engine.create(canvas);
+        this.scene = engine.createScene();
+
+        const mat = engine.createMaterial(PLASTIC);
+        const mats = this.materials = [
+            mat.createInstance(), mat.createInstance(), mat.createInstance()];
+        const colors = [[0.5, 0.75, 1], [0.9, 1, 0.9], [1, 0.75, 0.5]];
+        mats[0].setColorParameter('baseColor', Filament.RgbType.sRGB, colors[0]);
+        mats[1].setColorParameter('baseColor', Filament.RgbType.sRGB, colors[1]);
+        mats[2].setColorParameter('baseColor', Filament.RgbType.sRGB, colors[2]);
+
+        const backlight1 = Filament.EntityManager.get().create();
+        Filament.LightManager.Builder(LightType.DIRECTIONAL)
+            .intensity(70000.0)
+            .direction([0, 0, 1])
+            .castShadows(false)
+            .build(engine, backlight1);
+        this.scene.addEntity(backlight1);
+
+        const backlight2 = Filament.EntityManager.get().create();
+        Filament.LightManager.Builder(LightType.DIRECTIONAL)
+            .intensity(50000.0)
+            .direction([0, 0, -1])
+            .castShadows(false)
+            .build(engine, backlight2);
+        this.scene.addEntity(backlight2);
+
+        this.showLink(DEFAULT_LINK);
+
+        this.swapChain = engine.createSwapChain();
+        this.renderer = engine.createRenderer();
+        this.camera = engine.createCamera();
+        this.view = engine.createView();
+        this.view.setClearColor([1, 1, 1, 1]);
+        this.view.setCamera(this.camera);
+        this.view.setScene(this.scene);
+        this.resize();
+        this.render = this.render.bind(this);
+        this.resize = this.resize.bind(this);
+        window.addEventListener('resize', this.resize);
+        window.requestAnimationFrame(this.render);
+
+        const eye = [0, 0, 5], center = [0, 0, 0], up = [0, 1, 0];
+        this.camera.lookAt(eye, center, up);
+}
+
+    tessellate(linkid) {
+        const options = {
+            polygonSides: 30,
+            radius: 0.07,
+            tangents: true
+        };
+        return this.knots.tessellate(linkid, options);
+    }
+
+    showLink(linkid) {
+        // Hide old renderables (if any)
+        const meshes = this.renderables[this.linkid];
+        if (meshes) {
+            for (const mesh of meshes) {
+                this.scene.remove(mesh);
+            }
+        }
+        this.linkid = linkid;
+        // Create new renderables if they are not in the cache.
+        let renderables = this.renderables[linkid];
+        if (!renderables) {
+            const meshes = this.tessellate(linkid);
+            renderables = this.renderables[linkid] = [];
+            const M = 1.5, minpt = [-M, -M, -M], maxpt = [M, M, M];
+            const bounds = [minpt, maxpt];
+            let i = 0;
+            for (const mesh of meshes) {
+                const renderable = this.createRenderable(mesh, bounds, this.materials[i++]);
+                renderables.push(renderable);
+            }
+        }
+        // Add renderables to scene.
+        for (const renderable of renderables) {
+            this.scene.addEntity(renderable);
+        }
+    }
+
+    createRenderable(mesh, bounds, matinstance) {
+        const renderable = Filament.EntityManager.get().create();
+        const engine = this.engine;
+        const vertices = mesh.vertices;
+        const tangents = mesh.tangents;
+        const triangles = mesh.triangles;
+
+        const vb = Filament.VertexBuffer.Builder()
+            .vertexCount(vertices.length / 6)
+            .bufferCount(2)
+            .attribute(VertexAttribute.POSITION, 0, AttributeType.FLOAT3, 0, 24)
+            .attribute(VertexAttribute.TANGENTS, 1, AttributeType.SHORT4, 0, 0)
+            .normalized(VertexAttribute.TANGENTS)
+            .build(engine);
+
+        const ib = Filament.IndexBuffer.Builder()
+            .indexCount(triangles.length)
+            .bufferType(Filament.IndexBuffer$IndexType.USHORT)
+            .build(engine);
+
+        vb.setBufferAt(engine, 0, vertices);
+        vb.setBufferAt(engine, 1, tangents);
+        ib.setBuffer(engine, triangles);
+
+        Filament.RenderableManager.Builder(1)
+            .boundingBox(bounds)
+            .material(0, matinstance)
+            .geometry(0, Filament.RenderableManager$PrimitiveType.TRIANGLES, vb, ib)
+            .build(engine, renderable);
+
+        return renderable;
+    }
+
+    render() {
+        const transform = this.trackball.getMatrix();
+        const tcm = this.engine.getTransformManager();
+        for (let key in this.renderables) {
+            for (let renderable of this.renderables[key]) {
+                const inst = tcm.getInstance(renderable);
+                tcm.setTransform(inst, transform);
+                inst.delete();
+            }
+        }
+        this.renderer.render(this.swapChain, this.view);
+        window.requestAnimationFrame(this.render);
+    }
+
+    resize() {
+        const dpr = window.devicePixelRatio;
+        const width = this.canvas.width = this.canvas.clientWidth * dpr;
+        const height = this.canvas.height = this.canvas.clientHeight * dpr;
+        this.view.setViewport([0, 0, width, height]);
+        this.camera.setProjectionFov(45, width / height, 1.0, 10.0,
+            width > height ? Fov.VERTICAL : Fov.HORIZONTAL);
+    }
+}
+</script>
+</body>
+</html>
