@@ -58,7 +58,7 @@ Constructs a trackball, given an optional configuration dictionary.
 
 Returns a flat array of 16 numbers representing the current mat4 transformation.
 
-[badge]: https://travis-ci.org/prideout/.svg?branch=master "Build Status"
+[badge]: https://travis-ci.org/prideout/gltumble.svg?branch=master "Build Status"
 [glMatrix]: http://glmatrix.net
 [Interactive Demo]: https://prideout.net/gltumble
 [Filament]: https://github.com/google/filament
