@@ -28,7 +28,7 @@ const STATES = Object.freeze({
 
 export default class Trackball {
     // Optionally takes a DOM element for listening to pointer events.
-    // If no element is provided, clients must call the "mouse" or "processEvent" methods manually.
+    // If no element is provided, clients must call the "mouse" or "*Drag" methods manually.
     constructor(el, options) {
         this.config = {};
         Object.assign(this.config, DEFAULTS);
@@ -74,7 +74,6 @@ export default class Trackball {
     }
     tick() {
         if (this.config.autoTick) {
-            this.tick = this.tick.bind(this);
             window.requestAnimationFrame(this.tick);
         }
         const time = Date.now();
@@ -112,6 +111,19 @@ export default class Trackball {
         this.startPosition = position.slice();
         this.currentPosition = position.slice();
         this.currentState = STATES.DraggingInit;
+    }
+    endDrag(position) {
+        console.info('endDrag');
+        const previousSpin = this.getAngles()[0];
+        this.currentPosition = position.slice();
+        [this.currentSpin, this.currentTilt] = this.getAngles();
+        const spinDelta = this.currentSpin - previousSpin;
+        if (this.config.spinFriction === 1) {
+            this.currentState = STATES.Resting;
+        } else {
+            this.currentState = STATES.SpinningInertia;
+            this.inertiaSpeed = this.initialInertia * spinDelta;
+        }
     }
     updateDrag(position) {
         const delta = vec2.subtract(vec2.create(), position, this.startPosition);
@@ -161,20 +173,5 @@ export default class Trackball {
         const spin = mat4.fromRotation(mat4.create(), r[0], [0, 1, 0]);
         const tilt = mat4.fromRotation(mat4.create(), r[1], [1, 0, 0]);
         return mat4.multiply(tilt, tilt, spin);
-    }
-    // When releasing the mouse, capture the current rotation and change
-    // the state machine back to Resting or SpinningInertia.
-    endDrag(position) {
-        console.info('endDrag');
-        const previousSpin = this.getAngles()[0];
-        this.currentPosition = position.slice();
-        [this.currentSpin, this.currentTilt] = this.getAngles();
-        const spinDelta = this.currentSpin - previousSpin;
-        if (this.config.spinFriction === 1) {
-            this.currentState = STATES.Resting;
-        } else {
-            this.currentState = STATES.SpinningInertia;
-            this.inertiaSpeed = this.initialInertia * spinDelta;
-        }
     }
 }
