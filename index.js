@@ -62,7 +62,6 @@ export default class Trackball {
             return;
         }
         const pos = [evt.clientX, evt.clientY];
-        const del = [evt.deltaX || 0, evt.deltaY || 0];
         if (evt.type === 'pointerdown') {
             this.startDrag(pos);
         }
