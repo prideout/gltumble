@@ -27,10 +27,9 @@ zooming yet.
 ## Example
 
 ```js
-const trackball = new Trackball({foo: bar});
+const trackball = new Trackball(canvas);
 const mat = trackball.getMatrix();
-trackball.execute();
-console.info(`The first component has ${nverts} vertices.`);
+console.info(`The 4x4 transform looks like: ${mat}.`);
 ```
 
 ## Install
