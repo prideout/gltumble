@@ -115,8 +115,8 @@ export default class Trackball {
         const [previousSpin, previousTilt] = this.getAngles();
         this.currentPosition = position.slice();
         const [currentSpin, currentTilt] = this.getAngles();
-        this.inertiaSpeed[0] = this.initialInertia * (currentSpin - previousSpin)
-        this.inertiaSpeed[1] = this.initialInertia * (currentTilt - previousTilt)
+        this.inertiaSpeed[0] = this.initialInertia * (currentSpin - previousSpin);
+        this.inertiaSpeed[1] = this.initialInertia * (currentTilt - previousTilt);
     }
     getAngles() {
         const delta = vec2.subtract(vec2.create(), this.currentPosition, this.startPosition);

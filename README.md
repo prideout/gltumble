@@ -22,6 +22,7 @@ zooming.
 ## Example
 
 ```js
+const canvas = document.getElementsByTagName('canvas')[0];
 const trackball = new Trackball(canvas);
 const mat = trackball.getMatrix();
 console.info(`The 4x4 transform looks like: ${mat}.`);
