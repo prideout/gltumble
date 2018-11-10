@@ -113,16 +113,12 @@ export default class Trackball {
         this.currentState = STATES.DraggingInit;
     }
     endDrag(position) {
-        console.info('endDrag');
-        const previousSpin = this.getAngles()[0];
         this.currentPosition = position.slice();
         [this.currentSpin, this.currentTilt] = this.getAngles();
-        const spinDelta = this.currentSpin - previousSpin;
         if (this.config.spinFriction === 1) {
             this.currentState = STATES.Resting;
         } else {
             this.currentState = STATES.SpinningInertia;
-            this.inertiaSpeed = this.initialInertia * spinDelta;
         }
     }
     updateDrag(position) {
@@ -142,8 +138,6 @@ export default class Trackball {
 
         const previousSpin = this.getAngles()[0];
         this.currentPosition = position.slice();
-
-        // This is purely for trackpads:
         const spinDelta = this.getAngles()[0] - previousSpin;
         this.inertiaSpeed = this.initialInertia * spinDelta;
     }
