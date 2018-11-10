@@ -49,9 +49,10 @@ Or use one of the following two CDN builds.
 
 ## API Reference
 
-#### new Trackball(options)
+#### new Trackball(element, options)
 
-Constructs a trackball, given an optional configuration dictionary.
+Constructs a trackball, given an optional configuration dictionary. Listens to pointer events on the
+given DOM element.
 
 #### trackball.getMatrix()
 
