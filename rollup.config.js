@@ -15,6 +15,6 @@ const config = (file, plugins) => ({
 const bubleConfig = {transforms: {dangerousForOf: true}};
 
 export default [
-    config('gltumble.js', [resolve(), buble(bubleConfig)]),
-    config('gltumble.min.js', [resolve(), terser(), buble(bubleConfig)])
+    config('docs/gltumble.js', [resolve(), buble(bubleConfig)]),
+    config('docs/gltumble.min.js', [resolve(), terser(), buble(bubleConfig)])
 ];

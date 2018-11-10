@@ -7,22 +7,17 @@ dragging with a mouse, trackpad, or touch screen. It optionally applies inertia 
 continues to spin if you flick it.
 
 The trackball does not do anything with quaternions. It simply applies Y rotation (*spin*) followed
-by X rotation (*tilt*). Inertia applies to spin, but not tilt. The trackball avoids rotation about
-the Z axis, and here's why:
+by X rotation (*tilt*).
 
-**When I'm at a museum, I often walk around an *objet d'art*, or stand on my tiptoes to see its top,
-or crouch to see its underside. However, I very rarely tilt my head to the side, since that doesn't
-reveal anything new. The only times I tilt my head are when I'm expressing confusion, or trying to
-read vertical text.**
-
-Personally, I like this constraint. If you find it to be too limiting, try another package such
-as [trackball-controller].
+The trackball avoids rotation about the Z axis. Personally, I like this constraint because I rarely
+tilt my head in real life. If you find it to be too limiting, try another package such as
+[trackball-controller].
 
 - [Interactive Demo] using [Filament] and WebGL 2.0
-- The demo [source code] is a single JS file.
+- The [demo source] is a single file.
 
 Note that `gltumble` emulates the behavior used by [sketchfab.com] except that it does not support
-zooming yet.
+zooming.
 
 ## Example
 
@@ -43,16 +38,16 @@ import Trackball from 'gltumble';
 Or use one of the following two CDN builds.
 
 ```html
-<script src="//unpkg.com/gltumble/gltumble.min.js"></script> <!-- minified build -->
-<script src="//unpkg.com/gltumble/gltumble.js"></script> <!-- dev build -->
+<script src="//unpkg.com/gltumble@1.0.0/gltumble.min.js"></script> <!-- minified build -->
+<script src="//unpkg.com/gltumble@1.0.0/gltumble.js"></script> <!-- dev build -->
 ```
 
 ## API Reference
 
 #### new Trackball(element, options)
 
-Constructs a trackball, given an optional configuration dictionary. Listens to pointer events on the
-given DOM element.
+Constructs a trackball, given an optional DOM element and configuration dictionary. Listens to
+pointer events on the given DOM element.
 
 #### trackball.getMatrix()
 
@@ -62,6 +57,6 @@ Returns a flat array of 16 numbers representing the current mat4 transformation.
 [glMatrix]: http://glmatrix.net
 [Interactive Demo]: https://prideout.net/gltumble
 [Filament]: https://github.com/google/filament
-[source code]: https://github.com/prideout/knotess/blob/master/docs/demo.js
+[demo source]: https://github.com/prideout/gltumble/blob/master/docs/index.html
 [trackball-controller]: https://github.com/wwwtyro/trackball-controller
 [sketchfab.com]: https://sketchfab.com/models/bde956d410d4483da4126f1b0c80a06b
