@@ -840,12 +840,14 @@
       var isSpinning = state === STATES.DraggingSpin || state === STATES.DraggingInit;
       if (state === STATES.Coasting) {
           this.currentSpin += this.inertiaSpeed[0] * deltaTime;
+          this.currentTilt += this.inertiaSpeed[1] * deltaTime;
           if (Math.abs(this.inertiaSpeed[0]) < 0.0001 &&
                   Math.abs(this.inertiaSpeed[1]) < 0.0001) {
               this.currentState = STATES.Resting;
           }
       } else if (isSpinning && equals$9(this.currentPosition, this.previous2Position)) {
           this.currentSpin += this.inertiaSpeed[0] * deltaTime;
+          this.currentTilt += this.inertiaSpeed[1] * deltaTime;
       }
       this.inertiaSpeed[0] *= (1 - this.config.friction);
       this.inertiaSpeed[1] *= (1 - this.config.friction);
