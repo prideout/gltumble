@@ -1,8 +1,4 @@
-import {mat3, mat4, vec2} from 'gl-matrix';
-
-function m3rotation(radians, axis) {
-    return mat3.fromMat4(mat3.create(), mat4.fromRotation(mat4.create(), radians, axis));
-}
+import {mat4, vec2} from 'gl-matrix';
 
 const DEFAULTS = Object.freeze({
     autoTick: true,   // if false, clients must call the tick method once per frame
@@ -155,12 +151,6 @@ export default class Trackball {
             tilt += config.radiansPerPixel[1] * delta[1];
         }
         return [spin, tilt];
-    }
-    getRotation() {
-        const r = this.getAngles();
-        const spin = m3rotation(r[0], [0, 1, 0]);
-        const tilt = m3rotation(r[1], [1, 0, 0]);
-        return mat3.multiply(tilt, tilt, spin);
     }
     getMatrix() {
         const r = this.getAngles();
