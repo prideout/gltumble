@@ -769,11 +769,10 @@
 
   var STATES = Object.freeze({
       Resting: 0,
-      CoastingSpin: 1,
-      CoastingTilt: 2,
-      DraggingInit: 3,
-      DraggingSpin: 4,
-      DraggingTilt: 5,
+      Coasting: 1,
+      DraggingInit: 2,
+      DraggingSpin: 3,
+      DraggingTilt: 4,
   });
 
   var INTERNAL_CONFIG = Object.freeze({
@@ -806,9 +805,9 @@
       this.previous2Position = this.currentPosition.slice();
       this.currentSpin = 0;
       this.currentTilt = this.config.homeTilt;
-      this.currentState = this.config.startSpin ? STATES.CoastingSpin : STATES.Resting;
+      this.currentState = this.config.startSpin ? STATES.Coasting : STATES.Resting;
       this.previousTime = null;
-      this.inertiaSpeed = this.config.startSpin;
+      this.inertiaSpeed = [this.config.startSpin, 0];
       this.initialInertia = 0.125;
       Object.seal(this);
   };
@@ -839,15 +838,17 @@
       var deltaTime = time - this.previousTime;
       this.previousTime = time;
       var isSpinning = state === STATES.DraggingSpin || state === STATES.DraggingInit;
-      if (state === STATES.CoastingSpin) {
-          this.currentSpin += this.inertiaSpeed * deltaTime;
-          if (Math.abs(this.inertiaSpeed) < 0.0001) {
+      if (state === STATES.Coasting) {
+          this.currentSpin += this.inertiaSpeed[0] * deltaTime;
+          if (Math.abs(this.inertiaSpeed[0]) < 0.0001 &&
+                  Math.abs(this.inertiaSpeed[1]) < 0.0001) {
               this.currentState = STATES.Resting;
           }
       } else if (isSpinning && equals$9(this.currentPosition, this.previous2Position)) {
-          this.currentSpin += this.inertiaSpeed * deltaTime;
+          this.currentSpin += this.inertiaSpeed[0] * deltaTime;
       }
-      this.inertiaSpeed *= (1 - this.config.friction);
+      this.inertiaSpeed[0] *= (1 - this.config.friction);
+      this.inertiaSpeed[1] *= (1 - this.config.friction);
       this.previous2Position = this.previousPosition.slice();
       this.previousPosition = this.currentPosition.slice();
   };
@@ -864,14 +865,19 @@
       if (this.config.friction === 1) {
           this.currentState = STATES.Resting;
       } else {
-          this.currentState = STATES.CoastingSpin;
+          this.currentState = STATES.Coasting;
       }
   };
   Trackball.prototype.updateDrag = function updateDrag (position) {
-      var previousSpin = this.getAngles()[0];
+      var ref = this.getAngles();
+          var previousSpin = ref[0];
+          var previousTilt = ref[1];
       this.currentPosition = position.slice();
-      var spinDelta = this.getAngles()[0] - previousSpin;
-      this.inertiaSpeed = this.initialInertia * spinDelta;
+      var ref$1 = this.getAngles();
+          var currentSpin = ref$1[0];
+          var currentTilt = ref$1[1];
+      this.inertiaSpeed[0] = this.initialInertia * (currentSpin - previousSpin);
+      this.inertiaSpeed[1] = this.initialInertia * (currentTilt - previousTilt);
   };
   Trackball.prototype.getAngles = function getAngles () {
       var delta = subtract$6(create$8(), this.currentPosition, this.startPosition);

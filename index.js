@@ -9,11 +9,10 @@ const DEFAULT_CONFIG = Object.freeze({
 
 const STATES = Object.freeze({
     Resting: 0,
-    CoastingSpin: 1,
-    CoastingTilt: 2,
-    DraggingInit: 3,
-    DraggingSpin: 4,
-    DraggingTilt: 5,
+    Coasting: 1,
+    DraggingInit: 2,
+    DraggingSpin: 3,
+    DraggingTilt: 4,
 });
 
 const INTERNAL_CONFIG = Object.freeze({
@@ -49,9 +48,9 @@ export default class Trackball {
         this.previous2Position = this.currentPosition.slice();
         this.currentSpin = 0;
         this.currentTilt = this.config.homeTilt;
-        this.currentState = this.config.startSpin ? STATES.CoastingSpin : STATES.Resting;
+        this.currentState = this.config.startSpin ? STATES.Coasting : STATES.Resting;
         this.previousTime = null;
-        this.inertiaSpeed = this.config.startSpin;
+        this.inertiaSpeed = [this.config.startSpin, 0];
         this.initialInertia = 0.125;
         Object.seal(this);
     }
@@ -82,15 +81,17 @@ export default class Trackball {
         const deltaTime = time - this.previousTime;
         this.previousTime = time;
         const isSpinning = state === STATES.DraggingSpin || state === STATES.DraggingInit;
-        if (state === STATES.CoastingSpin) {
-            this.currentSpin += this.inertiaSpeed * deltaTime;
-            if (Math.abs(this.inertiaSpeed) < 0.0001) {
+        if (state === STATES.Coasting) {
+            this.currentSpin += this.inertiaSpeed[0] * deltaTime;
+            if (Math.abs(this.inertiaSpeed[0]) < 0.0001 &&
+                    Math.abs(this.inertiaSpeed[1]) < 0.0001) {
                 this.currentState = STATES.Resting;
             }
         } else if (isSpinning && vec2.equals(this.currentPosition, this.previous2Position)) {
-            this.currentSpin += this.inertiaSpeed * deltaTime;
+            this.currentSpin += this.inertiaSpeed[0] * deltaTime;
         }
-        this.inertiaSpeed *= (1 - this.config.friction);
+        this.inertiaSpeed[0] *= (1 - this.config.friction);
+        this.inertiaSpeed[1] *= (1 - this.config.friction);
         this.previous2Position = this.previousPosition.slice();
         this.previousPosition = this.currentPosition.slice();
     }
@@ -105,14 +106,15 @@ export default class Trackball {
         if (this.config.friction === 1) {
             this.currentState = STATES.Resting;
         } else {
-            this.currentState = STATES.CoastingSpin;
+            this.currentState = STATES.Coasting;
         }
     }
     updateDrag(position) {
-        const previousSpin = this.getAngles()[0];
+        const [previousSpin, previousTilt] = this.getAngles();
         this.currentPosition = position.slice();
-        const spinDelta = this.getAngles()[0] - previousSpin;
-        this.inertiaSpeed = this.initialInertia * spinDelta;
+        const [currentSpin, currentTilt] = this.getAngles();
+        this.inertiaSpeed[0] = this.initialInertia * (currentSpin - previousSpin)
+        this.inertiaSpeed[1] = this.initialInertia * (currentTilt - previousTilt)
     }
     getAngles() {
         const delta = vec2.subtract(vec2.create(), this.currentPosition, this.startPosition);
