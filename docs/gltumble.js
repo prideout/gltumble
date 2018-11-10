@@ -781,7 +781,6 @@
       allowSpin: true,
       epsilon: 3,
       radiansPerPixel: [0.01, 0.01],
-      lockAxes: false,
   });
 
   var Trackball = function Trackball(el, options) {
@@ -833,23 +832,22 @@
           window.requestAnimationFrame(this.tick);
       }
       var time = Date.now();
+      var state = this.currentState;
       if (this.previousTime == null) {
           this.previousTime = time;
       }
       var deltaTime = time - this.previousTime;
       this.previousTime = time;
-      var isSpinning = this.currentState === STATES.DraggingSpin ||
-              (this.currentState === STATES.DraggingInit && !this.config.lockAxes);
-      if (this.currentState === STATES.CoastingSpin) {
+      var isSpinning = state === STATES.DraggingSpin || state === STATES.DraggingInit;
+      if (state === STATES.CoastingSpin) {
           this.currentSpin += this.inertiaSpeed * deltaTime;
-          this.inertiaSpeed *= (1 - this.config.friction);
           if (Math.abs(this.inertiaSpeed) < 0.0001) {
               this.currentState = STATES.Resting;
           }
       } else if (isSpinning && equals$9(this.currentPosition, this.previous2Position)) {
           this.currentSpin += this.inertiaSpeed * deltaTime;
-          this.inertiaSpeed *= (1 - this.config.friction);
       }
+      this.inertiaSpeed *= (1 - this.config.friction);
       this.previous2Position = this.previousPosition.slice();
       this.previousPosition = this.currentPosition.slice();
   };
@@ -870,20 +868,6 @@
       }
   };
   Trackball.prototype.updateDrag = function updateDrag (position) {
-      var delta = subtract$6(create$8(), position, this.startPosition);
-      var config = this.config;
-
-      // If we haven't decided yet, decide if we're spinning or tilting.
-      if (this.currentState === STATES.DraggingInit && config.lockAxes) {
-          if (Math.abs(delta[0]) > config.epsilon && config.allowSpin) {
-              this.currentState = STATES.DraggingSpin;
-          } else if (Math.abs(delta[1]) > config.epsilon && config.allowTilt) {
-              this.currentState = STATES.DraggingTilt;
-          } else {
-              return;
-          }
-      }
-
       var previousSpin = this.getAngles()[0];
       this.currentPosition = position.slice();
       var spinDelta = this.getAngles()[0] - previousSpin;
@@ -898,7 +882,7 @@
           spin += config.radiansPerPixel[0] * delta[0];
       } else if (this.currentState === STATES.DraggingTilt) {
           tilt += config.radiansPerPixel[1] * delta[1];
-      } else if (!config.lockAxes && this.currentState === STATES.DraggingInit) {
+      } else if (this.currentState === STATES.DraggingInit) {
           spin += config.radiansPerPixel[0] * delta[0];
           tilt += config.radiansPerPixel[1] * delta[1];
       }
