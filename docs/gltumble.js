@@ -760,31 +760,34 @@
     };
   }();
 
-  var DEFAULTS = Object.freeze({
-      autoTick: true,   // if false, clients must call the tick method once per frame
-      startSpin: 0.02, // radians per second
-      allowTilt: true,
-      allowSpin: true,
-      spinFriction: 0.125, // 0 means no friction (infinite spin) while 1 means no inertia
-      epsilon: 3, // distance (in pixels) to wait before deciding if a drag is a Tilt or a Spin
-      radiansPerPixel: [0.01, 0.01],
-      trackpad: true,  // if true, compensate for the delay on trackpads that occur between touchup and mouseup
-      lockAxes: false, // if true, don't allow simultaneous spin + tilt
-      homeTilt: 0.25,
+  var DEFAULT_CONFIG = Object.freeze({
+      homeTilt: 0.25,    // starting tilt in radians
+      startSpin: 0.02,   // initial spin in radians per second
+      autoTick: true,    // if false, clients must call the tick method once per frame
+      friction: 0.125,   // 0 means no friction (infinite spin) while 1 means no inertia
   });
 
   var STATES = Object.freeze({
       Resting: 0,
-      SpinningStart: 1,
-      SpinningInertia: 2,
+      CoastingSpin: 1,
+      CoastingTilt: 2,
       DraggingInit: 3,
       DraggingSpin: 4,
       DraggingTilt: 5,
   });
 
+  var INTERNAL_CONFIG = Object.freeze({
+      allowTilt: true,
+      allowSpin: true,
+      epsilon: 3,
+      radiansPerPixel: [0.01, 0.01],
+      lockAxes: false,
+  });
+
   var Trackball = function Trackball(el, options) {
       this.config = {};
-      Object.assign(this.config, DEFAULTS);
+      Object.assign(this.config, INTERNAL_CONFIG);
+      Object.assign(this.config, DEFAULT_CONFIG);
       Object.assign(this.config, options);
       this.config = Object.freeze(this.config);
       if (this.config.autoTick) {
@@ -792,7 +795,7 @@
           window.requestAnimationFrame(this.tick);
       }
       if (el) {
-          var handler = this.mouse.bind(this);
+          var handler = this.handleEvent.bind(this);
           el.addEventListener('wheel', handler);
           el.addEventListener('pointermove', handler);
           el.addEventListener('pointerdown', handler);
@@ -804,13 +807,13 @@
       this.previous2Position = this.currentPosition.slice();
       this.currentSpin = 0;
       this.currentTilt = this.config.homeTilt;
-      this.currentState = this.config.startSpin ? STATES.SpinningInertia : STATES.Resting;
+      this.currentState = this.config.startSpin ? STATES.CoastingSpin : STATES.Resting;
       this.previousTime = null;
       this.inertiaSpeed = this.config.startSpin;
       this.initialInertia = 0.125;
       Object.seal(this);
   };
-  Trackball.prototype.mouse = function mouse (evt) {
+  Trackball.prototype.handleEvent = function handleEvent (evt) {
       if (evt.pointerType === 'touch' && !evt.isPrimary) {
           return;
       }
@@ -835,27 +838,17 @@
       }
       var deltaTime = time - this.previousTime;
       this.previousTime = time;
-
       var isSpinning = this.currentState === STATES.DraggingSpin ||
               (this.currentState === STATES.DraggingInit && !this.config.lockAxes);
-
-      if (this.currentState === STATES.SpinningStart) {
-          this.currentSpin += this.config.startSpin * deltaTime;
-      } else if (this.currentState === STATES.SpinningInertia) {
+      if (this.currentState === STATES.CoastingSpin) {
           this.currentSpin += this.inertiaSpeed * deltaTime;
-          this.inertiaSpeed *= (1 - this.config.spinFriction);
+          this.inertiaSpeed *= (1 - this.config.friction);
           if (Math.abs(this.inertiaSpeed) < 0.0001) {
               this.currentState = STATES.Resting;
           }
-
-      // Some trackpads have an intentional delay between fingers-up
-      // and the time we receive the mouseup event.  To accomodate this,
-      // we execute inertia even while we think the mouse is still down.
-      // This behavior can be disabled with the "trackpad" config option.
-      } else if (this.config.trackpad && isSpinning &&
-                  equals$9(this.currentPosition, this.previous2Position)) {
+      } else if (isSpinning && equals$9(this.currentPosition, this.previous2Position)) {
           this.currentSpin += this.inertiaSpeed * deltaTime;
-          this.inertiaSpeed *= (1 - this.config.spinFriction);
+          this.inertiaSpeed *= (1 - this.config.friction);
       }
       this.previous2Position = this.previousPosition.slice();
       this.previousPosition = this.currentPosition.slice();
@@ -870,10 +863,10 @@
 
       this.currentPosition = position.slice();
       (assign = this.getAngles(), this.currentSpin = assign[0], this.currentTilt = assign[1]);
-      if (this.config.spinFriction === 1) {
+      if (this.config.friction === 1) {
           this.currentState = STATES.Resting;
       } else {
-          this.currentState = STATES.SpinningInertia;
+          this.currentState = STATES.CoastingSpin;
       }
   };
   Trackball.prototype.updateDrag = function updateDrag (position) {
