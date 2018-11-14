@@ -39,8 +39,8 @@ import Trackball from 'gltumble';
 Or use one of the following two CDN builds.
 
 ```html
-<script src="//unpkg.com/gltumble@1.0.0/gltumble.min.js"></script> <!-- minified build -->
-<script src="//unpkg.com/gltumble@1.0.0/gltumble.js"></script> <!-- dev build -->
+<script src="//unpkg.com/gltumble@1.0.1/gltumble.min.js"></script> <!-- minified build -->
+<script src="//unpkg.com/gltumble@1.0.1/gltumble.js"></script> <!-- dev build -->
 ```
 
 ## API Reference

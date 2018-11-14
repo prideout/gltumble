@@ -178,7 +178,9 @@ class App {
                 inst.delete();
             }
         }
-        this.renderer.render(this.swapChain, this.view);
+        if (!this.trackball.isIdle()) {
+            this.renderer.render(this.swapChain, this.view);
+        }
         window.requestAnimationFrame(this.render);
     }
 

@@ -20,6 +20,7 @@ const INTERNAL_CONFIG = Object.freeze({
     allowSpin: true,
     epsilon: 3,
     radiansPerPixel: [0.01, 0.01],
+    clampTilt: Math.PI / 2
 });
 
 export default class Trackball {
@@ -52,6 +53,7 @@ export default class Trackball {
         this.previousTime = null;
         this.inertiaSpeed = [this.config.startSpin, 0];
         this.initialInertia = 0.125;
+        this.idle = false;
         Object.seal(this);
     }
     handleEvent(evt) {
@@ -96,6 +98,8 @@ export default class Trackball {
         this.inertiaSpeed[1] *= (1 - this.config.friction);
         this.previous2Position = this.previousPosition.slice();
         this.previousPosition = this.currentPosition.slice();
+        const eps = 0.0001;
+        this.idle = Math.abs(this.inertiaSpeed[0]) < eps && Math.abs(this.inertiaSpeed[1]) < eps;
     }
     startDrag(position) {
         this.startPosition = position.slice();
@@ -118,6 +122,13 @@ export default class Trackball {
         this.inertiaSpeed[0] = this.initialInertia * (currentSpin - previousSpin);
         this.inertiaSpeed[1] = this.initialInertia * (currentTilt - previousTilt);
     }
+    getMatrix() {
+        const r = this.getAngles();
+        const spin = mat4.fromRotation(mat4.create(), r[0], [0, 1, 0]);
+        const tilt = mat4.fromRotation(mat4.create(), r[1], [1, 0, 0]);
+        return mat4.multiply(tilt, tilt, spin);
+    }
+    isIdle() { return this.idle; }
     getAngles() {
         const delta = vec2.subtract(vec2.create(), this.currentPosition, this.startPosition);
         const config = this.config;
@@ -131,12 +142,8 @@ export default class Trackball {
             spin += config.radiansPerPixel[0] * delta[0];
             tilt += config.radiansPerPixel[1] * delta[1];
         }
+        tilt = Math.min(tilt, config.clampTilt);
+        tilt = Math.max(tilt, -config.clampTilt);
         return [spin, tilt];
-    }
-    getMatrix() {
-        const r = this.getAngles();
-        const spin = mat4.fromRotation(mat4.create(), r[0], [0, 1, 0]);
-        const tilt = mat4.fromRotation(mat4.create(), r[1], [1, 0, 0]);
-        return mat4.multiply(tilt, tilt, spin);
     }
 }

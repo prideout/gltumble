@@ -780,6 +780,7 @@
       allowSpin: true,
       epsilon: 3,
       radiansPerPixel: [0.01, 0.01],
+      clampTilt: Math.PI / 2
   });
 
   var Trackball = function Trackball(el, options) {
@@ -809,6 +810,7 @@
       this.previousTime = null;
       this.inertiaSpeed = [this.config.startSpin, 0];
       this.initialInertia = 0.125;
+      this.idle = false;
       Object.seal(this);
   };
   Trackball.prototype.handleEvent = function handleEvent (evt) {
@@ -853,6 +855,8 @@
       this.inertiaSpeed[1] *= (1 - this.config.friction);
       this.previous2Position = this.previousPosition.slice();
       this.previousPosition = this.currentPosition.slice();
+      var eps = 0.0001;
+      this.idle = Math.abs(this.inertiaSpeed[0]) < eps && Math.abs(this.inertiaSpeed[1]) < eps;
   };
   Trackball.prototype.startDrag = function startDrag (position) {
       this.startPosition = position.slice();
@@ -881,6 +885,13 @@
       this.inertiaSpeed[0] = this.initialInertia * (currentSpin - previousSpin);
       this.inertiaSpeed[1] = this.initialInertia * (currentTilt - previousTilt);
   };
+  Trackball.prototype.getMatrix = function getMatrix () {
+      var r = this.getAngles();
+      var spin = fromRotation$3(create$3(), r[0], [0, 1, 0]);
+      var tilt = fromRotation$3(create$3(), r[1], [1, 0, 0]);
+      return multiply$3(tilt, tilt, spin);
+  };
+  Trackball.prototype.isIdle = function isIdle () { return this.idle; };
   Trackball.prototype.getAngles = function getAngles () {
       var delta = subtract$6(create$8(), this.currentPosition, this.startPosition);
       var config = this.config;
@@ -894,13 +905,9 @@
           spin += config.radiansPerPixel[0] * delta[0];
           tilt += config.radiansPerPixel[1] * delta[1];
       }
+      tilt = Math.min(tilt, config.clampTilt);
+      tilt = Math.max(tilt, -config.clampTilt);
       return [spin, tilt];
-  };
-  Trackball.prototype.getMatrix = function getMatrix () {
-      var r = this.getAngles();
-      var spin = fromRotation$3(create$3(), r[0], [0, 1, 0]);
-      var tilt = fromRotation$3(create$3(), r[1], [1, 0, 0]);
-      return multiply$3(tilt, tilt, spin);
   };
 
   return Trackball;
