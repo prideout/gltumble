@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "Spin an object by dragging with a mouse, trackpad, or touch screen",
   "main": "gltumble.js",
+  "types": "types.d.ts",
   "module": "index.js",
   "jsdelivr": "gltumble.min.js",
   "unpkg": "gltumble.min.js",
